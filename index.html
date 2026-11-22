@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trading Simulator</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f1f3f4;--nav:#0b2b33;--card:#fff;--ink:#1b2a30;--mute:#6b7c84;--line:#e1e6e8;--up:#138a5b;--down:#d4452f;--buy:#0a9b6b;--acc:#0a9b6b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 Inter,system-ui,sans-serif;font-variant-numeric:tabular-nums}
+nav{background:var(--nav);color:#fff;display:flex;align-items:center;gap:20px;padding:0 20px;height:56px;position:sticky;top:0;z-index:5}
+nav b{font-size:17px;font-weight:700;white-space:nowrap;margin-right:6px}
+nav button.t{background:none;border:0;color:#a9c0c6;font:inherit;font-weight:500;height:56px;padding:0 4px;cursor:pointer;border-bottom:3px solid transparent}
+nav button.t.on{color:#fff;border-color:var(--acc)}
+.sw{position:relative;margin-left:auto;width:min(320px,40%)}
+.sw input{width:100%;padding:8px 12px;border:0;border-radius:6px;background:#17414c;color:#fff;font:inherit}
+.sw input::placeholder{color:#8fb0b8}
+#gr{position:absolute;top:42px;left:0;right:0;background:#fff;color:var(--ink);border-radius:8px;box-shadow:0 8px 24px #0003;overflow:hidden}
+#gr button{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;padding:10px 12px;border:0;background:none;font:inherit;text-align:left;cursor:pointer;border-bottom:1px solid var(--line)}
+#gr small{display:block;color:var(--mute);font-size:12px}#gr .r{text-align:right;white-space:nowrap}#gr .nores{padding:14px 12px;color:var(--mute)}#gr button.hv{background:var(--bg)}
+#gr button:hover{background:var(--bg)}
+main{max-width:1060px;margin:0 auto;padding:20px 16px 8px}
+h1{font-size:24px;margin:0 0 4px;font-weight:700}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:18px;margin-bottom:16px}
+.mute{color:var(--mute)}.up{color:var(--up)}.down{color:var(--down)}
+.big{font-size:34px;font-weight:700;letter-spacing:-.02em;line-height:1.1}
+.g2{display:grid;grid-template-columns:1fr 340px;gap:16px}
+@media(max-width:820px){.g2{grid-template-columns:1fr}nav{gap:10px;padding:0 10px}nav b{display:none}}
+canvas{width:100%;display:block;touch-action:pan-y;cursor:crosshair}
+#rg{display:flex;flex-wrap:wrap}#rg button{padding:7px 11px}.c{height:230px}.s{height:80px}
+.stats{display:flex;gap:28px;margin-top:12px;flex-wrap:wrap}.stats span{display:block;color:var(--mute);font-size:12px}
+table{width:100%;border-collapse:collapse}
+th{text-align:right;color:var(--mute);font-weight:500;font-size:12px;padding:8px 10px;border-bottom:1px solid var(--line)}
+td{text-align:right;padding:11px 10px;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left}
+tr.k{cursor:pointer}tr.k:hover td{background:#f7f9f9}
+td small{display:block;color:var(--mute)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:#fff;margin:12px 12px 12px 0}
+.seg button{border:0;background:none;padding:8px 16px;font:inherit;font-weight:500;cursor:pointer;color:var(--mute)}
+.seg button.on{background:var(--nav);color:#fff}
+.f{padding:9px 12px;border:1px solid var(--line);border-radius:6px;font:inherit;width:240px;max-width:100%}
+.tabs{display:flex;border-bottom:1px solid var(--line);margin:-18px -18px 14px}
+.tabs button{flex:1;padding:14px;border:0;background:none;font:inherit;font-weight:600;cursor:pointer;color:var(--mute);border-bottom:3px solid transparent}
+.tabs button.on.buy{color:var(--buy);border-color:var(--buy)}.tabs button.on.sell{color:var(--down);border-color:var(--down)}
+label{display:block;font-size:12px;color:var(--mute);margin:10px 0 4px}
+.in{width:100%;padding:11px;border:1px solid var(--line);border-radius:6px;font:inherit}
+.kv{display:flex;justify-content:space-between;padding:6px 0}
+.go{width:100%;margin-top:12px;padding:13px;border:0;border-radius:6px;color:#fff;font:inherit;font-weight:700;cursor:pointer}
+.go.buy{background:var(--buy)}.go.sell{background:var(--down)}
+.ghost{background:#fff;border:1px solid var(--line);border-radius:6px;padding:8px 12px;font:inherit;cursor:pointer;color:var(--mute)}
+.pager{display:flex;gap:10px;align-items:center;justify-content:center;margin:4px 0 12px}
+footer{max-width:1060px;margin:0 auto;padding:4px 16px 32px;color:var(--mute);font-size:12px}
+button:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.hide{display:none}.setup{max-width:560px;margin:40px auto}
+</style>
+</head>
+<body>
+<nav>
+  <b>Trading Simulator</b>
+  <button class="t" data-v="home">Översikt</button>
+  <button class="t" data-v="list">Aktier</button>
+  <button class="t" data-v="port">Portfölj</button>
+  <div class="sw"><input id="gs" placeholder="Sök bolag, t.ex. Volvo eller NVDA" autocomplete="off"><div id="gr"></div></div>
+</nav>
+<main id="main"></main>
+<footer id="foot"></footer>
+
+<script>
+const DEFAULT_PROXY='https://trading-sim.ufown2011.workers.dev';
+const START=1000,KEY='trading-sim-v2',PG=15;
+const ST0='ABB ACAD AAK ADDT-B AFRY ALFA ALIV-SDB ARJO-B ASSA-B ATCO-A ATCO-B AXFO AZA AZN BALD-B BEIJ-B BETS-B BILL BIOA-B BOL BURE CAST CATE CLAS-B CTT DIOS DOMETIC ELUX-B EKTA-B EMBRAC-B EOLU-B EPI-A EPI-B EQT ERIC-A ERIC-B ESSITY-B EVO FABG FING-B FPAR-A GETI-B HEBA-B HEXA-B HEXPOL-B HM-B HMS HOLM-B HUFV-A HUSQ-B INDT INDU-C INTRUM INVE-A INVE-B JM KINV-B KNOW LATO-B LIFCO-B LOOMIS LUND-B MEKO MIPS MTRS NCC-B NDA-SE NEWA-B NIBE-B NOLA-B NP3 NYF OEM-B PEAB-B PLAZ-B PNDX-B RATO-B SAAB-B SAND SBB-B SCA-B SEB-A SECU-B SHB-A SHB-B SINCH SKA-B SKF-B SOBI SSAB-A SSAB-B SWEC-B SWED-A SYSR TEL2-B TELIA THULE TIETOS TREL-B TRUE-B VBG-B VITR VNV VOLV-A VOLV-B WALL-B WIHL XVIVO';
+const EXTRA='IRLAB-A BIOG-B HNSA ONCO CAMX OX2 VOLCAR-B SAVE SAGA-B LAGR-B LIAB NOTE NCAB NETI-B NMAN ORES PACT RVRC SKIS-B SLP-B STORY-B TOBII TRIAN-B ZZ-B BHG BOOZT CIBUS CLA-B COOR DUNI ENEA GARO G5EN HANZA IAR-B KAMBI KFAST-B LIME MCAP MCOV-B MYCR NOBINA OVZON RESURS SCST SENS SHOT SIVE STAR-B STWK SVOL-B TFBANK ACTI ALIF-B ANOT ASKER ATRLJ-B AVEG BEGR BIOT BONAV-B BUFAB CORE-B CRED-A DEDI DORO FOI-B FNOX GENO INWI KARO KDEV LOGI-B NAXS PREC PRIC-B QLIRO SPEC TROAX BIOVIC-B ELAN-B MANG ALZ ASMDEE-B AQ ARION-B BIBB CINT CLNK-B EPRO-B FLOW HUMBLE INFREA LINC MODL NORDNET PARA PDX SAND SYNSAM VESTUM'; 
+const ST=[...new Set((ST0+' '+EXTRA).split(' ').map(x=>x+'.ST'))].sort();
+const US='AAPL MSFT NVDA AMZN GOOGL META TSLA AVGO NFLX AMD INTC CSCO ADBE PEP COST QCOM TXN INTU AMGN BKNG ISRG ADP MU PYPL SBUX GILD MDLZ LRCX PANW'.split(' ');
+const IX=['^OMX','^IXIC'],IXN={'^OMX':'OMXS30','^IXIC':'Nasdaq Composite'};
+const $=id=>document.getElementById(id);
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const usd=(v,d=2)=>(v<0?'-':'')+'$'+Math.abs(v).toLocaleString('sv-SE',{minimumFractionDigits:d,maximumFractionDigits:d});
+const num=v=>v.toLocaleString('sv-SE',{minimumFractionDigits:2,maximumFractionDigits:2});
+const pct=v=>(v>=0?'+':'')+v.toFixed(2).replace('.',',')+' %';
+const cur=c=>c==='USD'?'$':c==='SEK'?' kr':c?' '+c:'';
+const fmt=(v,c)=>c==='USD'?usd(v):num(v)+cur(c);
+const cls=v=>v>=0?'up':'down';
+const get=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
+const set=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
+let proxy=(get('sim-proxy')||DEFAULT_PROXY).replace(/\/$/,'');
+let st;try{st=JSON.parse(get(KEY))}catch(e){}
+st=st||{cash:START,hold:{},pv:[START],trades:[]};
+const save=()=>set(KEY,JSON.stringify(st));
+const NA=new Set(JSON.parse(get('sim-na')||'[]'));
+let Q={},FX={USD:1},view='home',sel='',mk='ST',page=0,filt='',side='buy',qty=1,msg='',stamp='';
+
+let lastErr='',bad=false;
+async function J(u){
+  for(const h of ['query1','query2']){
+    try{const r=await fetch(proxy+'?u='+encodeURIComponent(u.replace('query1',h)));if(r.ok)return await r.json();lastErr='HTTP '+r.status+' '+(await r.text()).slice(0,80)}catch(e){lastErr='nätverksfel: '+e.message}
+  }
+  throw new Error(lastErr)}
+const RG={'1d':['1d','5m'],'5d':['5d','15m'],'1mo':['1mo','1d'],'6mo':['6mo','1d'],'1y':['1y','1d'],'5y':['5y','1wk'],'max':['max','1mo']};
+const RL={'1d':'idag','5d':'senaste 5 dagarna','1mo':'senaste månaden','6mo':'senaste 6 månaderna','1y':'senaste året','5y':'senaste 5 åren','max':'sedan start'};
+let rng='1d',H={};
+async function loadHist(){update();if(rng==='1d')return;const k=sel+rng;if(H[k])return;
+  try{const[a,i]=RG[rng];const d=await J('https://query1.finance.yahoo.com/v8/finance/chart/'+encodeURIComponent(sel)+'?interval='+i+'&range='+a);H[k]=pairs(d.chart.result[0])}catch(e){msg='Kunde inte hämta historik ('+lastErr+')'}update()}
+function pairs(x){const ts=x.timestamp||[],cl=x.indicators.quote[0].close,v=[],t=[];cl.forEach((c,i)=>{if(c!=null){v.push(c);t.push(ts[i])}});return{v,t}}
+async function quote(s){
+  const d=await J('https://query1.finance.yahoo.com/v8/finance/chart/'+encodeURIComponent(s)+'?interval=5m&range=1d');
+  const x=d.chart.result[0],m=x.meta;
+  return{px:m.regularMarketPrice,prev:m.chartPreviousClose,cur:m.currency,name:IXN[s]||m.shortName||m.longName||s,t:m.regularMarketTime,hist:pairs(x).v,ts:pairs(x).t,hi:m.regularMarketDayHigh,lo:m.regularMarketDayLow,h52:m.fiftyTwoWeekHigh,l52:m.fiftyTwoWeekLow,vol:m.regularMarketVolume,at:Date.now()};
+}
+const usdPx=s=>{const q=Q[s];return q&&q.cur&&FX[q.cur]?q.px*FX[q.cur]:null};
+const list=()=>{const f=filt.toLowerCase();return(mk==='ST'?ST:US).filter(s=>!NA.has(s)&&(!f||s.toLowerCase().includes(f)||(Q[s]&&Q[s].name.toLowerCase().includes(f))))};
+const vis=()=>list().slice(page*PG,page*PG+PG);
+const value=()=>st.cash+Object.entries(st.hold).reduce((a,[s,h])=>a+h.q*(usdPx(s)??h.avg),0);
+
+async function refresh(){
+  if(!proxy)return;
+  const want=new Set([...IX,...Object.keys(st.hold)]);
+  if(view==='stock'&&sel)want.add(sel);
+  if(view==='list')vis().forEach(s=>want.add(s));
+  const need=[...want].filter(s=>!Q[s]||Date.now()-Q[s].at>20000);
+  let fails=0;const todo=[...need];
+  await Promise.all([0,1,2,3].map(async()=>{while(todo.length){const s=todo.shift();try{Q[s]=await quote(s)}catch(e){if(/HTTP 404/.test(e.message)){NA.add(s);set('sim-na',JSON.stringify([...NA]))}else fails++}}}));
+  bad=fails>0;
+  const curs=new Set(Object.values(Q).map(q=>q.cur).filter(c=>c&&c!=='USD'));
+  await Promise.allSettled([...curs].map(c=>quote(c+'USD=X').then(q=>FX[c]=q.px)));
+  const age=Date.now()/1000-Math.max(0,...Object.values(Q).map(q=>q.t||0));
+  stamp=(bad?'Kunde inte hämta '+fails+' av '+need.length+' kurser ('+lastErr+'). ':'')+(age>1200?'Börserna är stängda, visar senaste kurs. ':'Stockholm kan vara ca 15 min fördröjd. ')+'Uppdaterad '+new Date().toLocaleTimeString('sv-SE');
+  st.pv.push(value());(st.pt=st.pt||[]).push(Math.floor(Date.now()/1000));if(st.pv.length>300)st.pv.shift();if(st.pt.length>300)st.pt.shift();save();update();
+}
+
+function ptimes(){const t=st.pt||[];return Array(Math.max(0,st.pv.length-t.length)).fill(null).concat(t)}
+function chart(cv,data,up,times,pf,base){
+  if(!cv)return;const dpr=devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight;
+  cv.width=w*dpr;cv.height=h*dpr;cv._c={data,times,up,pf,base,w,h};draw(cv,-1);
+  if(!cv._b){cv._b=1;
+    const mv=e=>{const c=cv._c;if(!c||!c.data||c.data.length<2)return;const x=(e.touches?e.touches[0].clientX:e.clientX)-cv.getBoundingClientRect().left;draw(cv,Math.max(0,Math.min(c.data.length-1,Math.round(x/(c.w-58)*(c.data.length-1)))))};
+    cv.addEventListener('mousemove',mv);cv.addEventListener('touchstart',mv,{passive:true});cv.addEventListener('touchmove',mv,{passive:true});
+    cv.addEventListener('mouseleave',()=>draw(cv,-1));cv.addEventListener('touchend',()=>draw(cv,-1))}
+}
+const fd=(t,span)=>{const d=new Date(t*1000);return span<4*86400?d.toLocaleString('sv-SE',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):d.toLocaleDateString('sv-SE',{day:'numeric',month:'short',year:'numeric'})};
+function draw(cv,hv){
+  const c=cv._c,data=c.data,times=c.times,w=c.w,h=c.h,g=cv.getContext('2d'),dpr=devicePixelRatio||1;
+  g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);g.font='11px Inter,system-ui';
+  if(!data||data.length<2){g.fillStyle='#6b7c84';g.fillText('Hämtar kursdata...',4,20);return}
+  const mn=Math.min(...data),mx=Math.max(...data),pad=(mx-mn)*.1||1,lo=mn-pad,hi=mx+pad;
+  const X=i=>i/(data.length-1)*(w-58),Y=v=>h-(v-lo)/(hi-lo)*h,col=c.up?'#138a5b':'#d4452f';
+  g.fillStyle='#6b7c84';g.strokeStyle='#e8eced';g.lineWidth=1;
+  for(let i=0;i<4;i++){const v=lo+(hi-lo)*i/3,y=Y(v);g.beginPath();g.moveTo(0,y);g.lineTo(w-54,y);g.stroke();g.fillText(v.toFixed(v>100?0:2),w-50,y+4)}
+  g.strokeStyle=col;g.lineWidth=2;g.lineJoin='round';g.beginPath();
+  data.forEach((v,i)=>i?g.lineTo(X(i),Y(v)):g.moveTo(X(i),Y(v)));g.stroke();
+  if(hv<0)return;
+  const v=data[hv],x=X(hv),y=Y(v),b=c.base!=null?c.base:data[0],pc=(v/b-1)*100;
+  g.strokeStyle='#6b7c84';g.lineWidth=1;g.setLineDash([4,3]);g.beginPath();g.moveTo(x,0);g.lineTo(x,h);g.stroke();g.setLineDash([]);
+  g.fillStyle=col;g.beginPath();g.arc(x,y,4,0,7);g.fill();
+  const tv=(times||[]).filter(Boolean),span=tv.length>1?tv[tv.length-1]-tv[0]:0;
+  const l1=c.pf?c.pf(v):v.toFixed(2),l2=pct(pc),l3=times&&times[hv]?fd(times[hv],span):'';
+  g.font='600 12px Inter,system-ui';const w1=g.measureText(l1+'  ').width,bw=Math.max(w1+g.measureText(l2).width,g.measureText(l3).width)+20,bh=l3?46:28;
+  let bx=x+12;if(bx+bw>w-54)bx=x-bw-12;if(bx<0)bx=0;
+  g.fillStyle='#0b2b33';g.beginPath();g.rect(bx,6,bw,bh);g.fill();
+  g.fillStyle='#fff';g.fillText(l1,bx+10,24);g.fillStyle=pc>=0?'#5ee0a8':'#ff8a78';g.fillText(l2,bx+10+w1,24);
+  if(l3){g.fillStyle='#a9c0c6';g.font='12px Inter,system-ui';g.fillText(l3,bx+10,41)}
+}
+
+function go(v,s){view=v;if(s){sel=s;qty=1;rng='1d'}msg='';shell();refresh()}
+function shell(){
+  document.querySelectorAll('nav .t').forEach(b=>b.classList.toggle('on',b.dataset.v===(view==='stock'?'list':view)));
+  const m=$('main');
+  if(!proxy){m.innerHTML=`<div class="card setup"><h1>Koppla på live-kurser</h1><p class="mute">Klistra in adressen till din Cloudflare Worker.</p><input class="in" id="px" placeholder="https://..."><button class="go buy" id="spx">Spara</button></div>`;
+    $('spx').onclick=()=>{const v=$('px').value.trim();if(/^https:\/\//.test(v)){set('sim-proxy',v);location.reload()}};return}
+  if(view==='home')m.innerHTML=`<h1>Översikt</h1><div class="g2" style="margin-top:14px"><div class="card"><div class="mute">Totalt värde</div><div class="big" id="total"></div><div id="pl" style="font-weight:600;margin-bottom:8px"></div><canvas class="c" id="pc"></canvas><div class="stats"><div><span>Kontanter</span><b id="cash"></b></div><div><span>Investerat</span><b id="inv"></b></div></div></div><div><div class="card" id="ix0"></div><div class="card" id="ix1"></div></div></div><div class="card" style="padding:0"><div style="padding:16px 18px 8px"><b style="font-size:16px">Mina innehav</b></div><table><thead><tr><th>Innehav</th><th>Antal</th><th>Snittpris</th><th>Värde</th><th>Utveckling</th></tr></thead><tbody id="hh"></tbody></table></div>`;
+  if(view==='list'){m.innerHTML=`<h1>Aktier</h1><div class="seg"><button data-m="ST">Stockholmsbörsen</button><button data-m="US">Nasdaq (USA)</button></div><input class="f" id="ft" placeholder="Filtrera i listan" value="${esc(filt)}"><div class="card" style="padding:0;margin-top:12px"><table><thead><tr><th>Bolag</th><th>Senast</th><th>Idag</th></tr></thead><tbody id="tb"></tbody></table></div><div class="pager"><button class="ghost" id="pv">Föregående</button><span class="mute" id="pg"></span><button class="ghost" id="nx">Nästa</button></div><p class="mute">Hittar du inte bolaget? Sök i rutan högst upp.</p>`;
+    document.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{mk=b.dataset.m;page=0;update();refresh()});
+    $('ft').oninput=e=>{filt=e.target.value;page=0;update();refresh()};
+    $('pv').onclick=()=>{if(page>0){page--;update();refresh()}};
+    $('nx').onclick=()=>{if((page+1)*PG<list().length){page++;update();refresh()}}}
+  if(view==='stock')m.innerHTML=`<div class="g2"><div class="card"><h1 id="sn"></h1><div class="mute" id="ss"></div><div class="big" id="sp" style="margin:10px 0 2px"></div><div id="sc2" style="font-weight:600;margin-bottom:8px"></div><div class="seg" id="rg" style="margin:0 0 8px"><button data-r="1d">1 dag</button><button data-r="5d">5 dagar</button><button data-r="1mo">1 mån</button><button data-r="6mo">6 mån</button><button data-r="1y">1 år</button><button data-r="5y">5 år</button><button data-r="max">Max</button></div><canvas class="c" id="pc"></canvas><div class="stats" id="kf" style="margin-top:14px"></div></div><div class="card"><div class="tabs"><button class="buy" id="tb">Köp</button><button class="sell" id="ts">Sälj</button></div><label for="qy">Antal aktier</label><input class="in" id="qy" type="number" min="1" step="1" value="${qty}"><button class="ghost" id="mx" style="margin-top:6px">Max antal</button><div class="kv" style="margin-top:10px"><span class="mute">Kurs</span><b id="op"></b></div><div class="kv"><span class="mute">Belopp</span><b id="oc"></b></div><div class="kv"><span class="mute" id="ol"></span><b id="oh"></b></div><div id="own"></div><button class="go buy" id="go"></button><div class="mute" id="msg" style="margin-top:10px" role="status"></div></div></div>`,
+    $('tb').onclick=()=>{side='buy';update()},$('ts').onclick=()=>{side='sell';update()},
+    $('qy').oninput=e=>{qty=Math.floor(+e.target.value);update()},$('go').onclick=trade,$('mx').onclick=()=>{const p=usdPx(sel);qty=side==='buy'?(p?Math.max(0,Math.floor(st.cash/p)):0):(st.hold[sel]?st.hold[sel].q:0);$('qy').value=qty;update()},document.querySelectorAll('#rg button').forEach(b=>b.onclick=()=>{rng=b.dataset.r;loadHist()});
+  if(view==='port')m.innerHTML=`<h1>Portfölj</h1><div class="card" id="alloc" style="margin-top:14px"></div><div class="card" style="padding:0"><table><thead><tr><th>Innehav</th><th>Antal</th><th>Snittpris</th><th>Värde</th><th>Utveckling</th></tr></thead><tbody id="ph"></tbody></table></div><h1 style="font-size:18px;margin-top:24px">Senaste affärer</h1><div class="card" style="padding:0;margin-top:10px"><table><tbody id="th"></tbody></table></div><button class="ghost" id="rs">Börja om med $1 000</button>`;
+  m.onclick=e=>{const r=e.target.closest('tr.k');if(r)go('stock',r.dataset.s)};
+  update();
+}
+
+function update(){
+  if(!proxy)return;const tv=value(),diff=tv-START;
+  $('foot').style.color=bad?'#d4452f':'';$('foot').textContent=stamp+(stamp?'. ':'')+'Kurser från Yahoo Finance. Simulering med låtsaspengar, ingen investeringsrådgivning.';
+  if(view==='home'){
+    $('total').textContent=usd(tv);$('pl').textContent=(diff>=0?'+':'')+usd(diff)+' ('+pct(diff/START*100)+')';$('pl').className=cls(diff);
+    $('cash').textContent=usd(st.cash);$('inv').textContent=usd(tv-st.cash);$('hh').innerHTML=holdRows();chart($('pc'),st.pv.length>1?st.pv:[START,START],diff>=0,ptimes(),usd,START);
+    IX.forEach((s,i)=>{const q=Q[s];$('ix'+i).innerHTML=`<b>${IXN[s]}</b>${q?`<div class="big" style="font-size:24px;margin-top:4px">${num(q.px)}</div><div class="${cls(q.px-q.prev)}" style="font-weight:600">${pct((q.px/q.prev-1)*100)} idag</div><canvas class="s" id="ic${i}"></canvas>`:'<div class="mute">Hämtar...</div>'}`;
+      if(q)chart($('ic'+i),q.hist,q.px>=q.prev,q.ts,num)})}
+  if(view==='list'){
+    document.querySelectorAll('.seg button').forEach(b=>b.classList.toggle('on',b.dataset.m===mk));
+    const n=list().length;$('pg').textContent='Sida '+(page+1)+' av '+Math.max(1,Math.ceil(n/PG))+' ('+n+' bolag)';
+    $('tb').innerHTML=vis().map(s=>{const q=Q[s];return `<tr class="k" data-s="${s}"><td><b>${q?esc(q.name):s}</b><small>${s.replace('.ST','')}${st.hold[s]?' · du äger '+st.hold[s].q+' st':''}</small></td><td>${q?fmt(q.px,q.cur):'<span class="mute">...</span>'}</td><td class="${q?cls(q.px-q.prev):''}">${q?pct((q.px/q.prev-1)*100):''}</td></tr>`}).join('')||'<tr><td class="mute">Inga träffar.</td></tr>'}
+  if(view==='stock'){
+    const q=Q[sel],p=usdPx(sel),h=st.hold[sel];
+    $('sn').textContent=q?q.name:sel;$('ss').textContent=sel+(q?' · '+(sel.endsWith('.ST')?'Stockholmsbörsen':'USA'):'');
+    $('sp').textContent=q?fmt(q.px,q.cur):'Hämtar...';
+    const hd=rng==='1d'?(q?{v:q.hist,t:q.ts}:null):H[sel+rng];
+    const per=rng!=='1d'&&hd&&hd.v.length>1?(hd.v[hd.v.length-1]/hd.v[0]-1)*100:q?(q.px/q.prev-1)*100:0;
+    $('sc2').textContent=q?pct(per)+' '+RL[rng]+(q.cur&&q.cur!=='USD'&&p?'  ·  ≈ '+usd(p):''):'';$('sc2').className=cls(per);
+    chart($('pc'),hd?hd.v:[],hd&&hd.v.length>1?hd.v[hd.v.length-1]>=hd.v[0]:true,hd?hd.t:[],q?(v=>fmt(v,q.cur)):null,rng==='1d'&&q?q.prev:null);
+    const f=v=>v!=null?fmt(v,q.cur):'-';
+    $('kf').innerHTML=q?[['Föregående stängning',f(q.prev)],['Dagens högsta',f(q.hi)],['Dagens lägsta',f(q.lo)],['52 v högsta',f(q.h52)],['52 v lägsta',f(q.l52)],['Volym',q.vol!=null?q.vol.toLocaleString('sv-SE'):'-']].map(a=>`<div><span>${a[0]}</span><b>${a[1]}</b></div>`).join(''):'';
+    document.querySelectorAll('#rg button').forEach(b=>b.classList.toggle('on',b.dataset.r===rng));
+    $('tb').classList.toggle('on',side==='buy');$('ts').classList.toggle('on',side==='sell');
+    $('op').textContent=p?usd(p):'-';$('oc').textContent=p&&qty>0?usd(p*qty):'-';
+    $('ol').textContent=side==='buy'?'Tillgängliga kontanter':'Du äger';$('oh').textContent=side==='buy'?usd(st.cash):(h?h.q:0)+' st';
+    $('own').innerHTML=h?`<div style="border-top:1px solid var(--line);margin-top:8px;padding-top:8px"><div class="kv"><span class="mute">Ditt innehav</span><b>${h.q} st · ${usd(h.q*(p??h.avg))}</b></div><div class="kv"><span class="mute">Utveckling</span><b class="${cls((p??h.avg)-h.avg)}">${usd(((p??h.avg)-h.avg)*h.q)} (${pct(((p??h.avg)/h.avg-1)*100)})</b></div></div>`:'';
+    const g=$('go');g.className='go '+side;g.textContent=side==='buy'?'Köp':'Sälj';$('msg').textContent=msg}
+  if(view==='port'){
+    const hk=Object.keys(st.hold);
+    $('ph').innerHTML=holdRows()+`<tr><td>Kontanter</td><td></td><td></td><td>${usd(st.cash)}</td><td></td></tr>`;
+    const parts=[...hk.map(k=>[k,st.hold[k].q*(usdPx(k)??st.hold[k].avg)]),['Kontanter',st.cash]],tot=parts.reduce((a,b)=>a+b[1],0)||1,col=['#0a9b6b','#2f6fed','#e0a100','#8a4fd6','#d4452f','#17a2b8','#6b7c84'];
+    $('alloc').innerHTML=`<div class="kv"><b>Fördelning</b><span class="mute">Totalt ${usd(tv)}</span></div><div style="display:flex;height:14px;border-radius:7px;overflow:hidden;margin:8px 0 12px">${parts.map((x,i)=>`<div title="${esc(x[0])}" style="width:${x[1]/tot*100}%;background:${col[i%7]}"></div>`).join('')}</div><div style="display:flex;gap:16px;flex-wrap:wrap">${parts.map((x,i)=>`<span><i style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${col[i%7]};margin-right:6px"></i>${esc(x[0].replace('.ST',''))} ${(x[1]/tot*100).toFixed(1).replace('.',',')} %</span>`).join('')}</div>`;
+    $('rs').onclick=()=>{if(confirm('Nollställa allt och börja om med $1 000?')){st={cash:START,hold:{},pv:[START],trades:[]};save();update()}};
+    $('th').innerHTML=st.trades.length?st.trades.map(t=>`<tr><td>${t.t}</td><td class="${t.side==='buy'?'up':'down'}">${t.side==='buy'?'Köp':'Sälj'}</td><td>${t.q} st ${t.s}</td><td>${usd(t.p)}</td></tr>`).join(''):'<tr><td class="mute">Inga affärer än.</td></tr>'}
+}
+
+function holdRows(){
+  const hk=Object.keys(st.hold);
+  if(!hk.length)return '<tr><td colspan="5" class="mute" style="text-align:center;padding:30px">Du äger inga aktier ännu.<br><button class="ghost" style="margin-top:10px" onclick="go(\'list\')">Hitta aktier att köpa</button></td></tr>';
+  return hk.map(k=>{const h=st.hold[k],p=usdPx(k)??h.avg,g=(p-h.avg)*h.q;return `<tr class="k" data-s="${k}"><td><b>${Q[k]?esc(Q[k].name):k}</b><small>${k}</small></td><td>${h.q}</td><td>${usd(h.avg)}</td><td>${usd(h.q*p)}</td><td class="${cls(g)}">${usd(g)}<small>${pct((p/h.avg-1)*100)}</small></td></tr>`}).join('')}
+function trade(){
+  const p=usdPx(sel),q=qty;
+  if(!p){msg='Ingen kurs än för detta bolag.';return update()}
+  if(!q||q<1){msg='Ange ett heltal över 0.';return update()}
+  const h=st.hold[sel]||{q:0,avg:0};
+  if(side==='buy'){
+    if(q*p>st.cash){msg='Du har inte tillräckligt med kontanter.';return update()}
+    h.avg=(h.avg*h.q+q*p)/(h.q+q);h.q+=q;st.cash-=q*p;st.hold[sel]=h;
+  }else{
+    if(q>h.q){msg='Du äger '+h.q+' aktier i det här bolaget.';return update()}
+    h.q-=q;st.cash+=q*p;h.q?st.hold[sel]=h:delete st.hold[sel];
+  }
+  st.trades.unshift({t:new Date().toLocaleTimeString('sv-SE'),side,s:sel,q,p});st.trades=st.trades.slice(0,10);
+  msg=(side==='buy'?'Köpte ':'Sålde ')+q+' st för '+usd(q*p);save();update();
+}
+
+document.querySelectorAll('nav .t').forEach(b=>b.onclick=()=>go(b.dataset.v));
+const OKX={NMS:'Nasdaq',NGM:'Nasdaq',NCM:'Nasdaq',NYQ:'NYSE',ASE:'NYSE American',PCX:'NYSE Arca',BTS:'Cboe',STO:'Stockholm'};
+let tm,hits=[],hi=-1,seq=0;
+function rank(v,x){const f=v.toLowerCase(),n=(x.shortname||x.longname||'').toLowerCase(),sy=x.symbol.toLowerCase().replace('.st','');let sc=0;
+  if(sy===f)sc+=100;else if(sy.startsWith(f))sc+=40;
+  if(n===f)sc+=80;else if(n.startsWith(f))sc+=50+Math.max(0,20-(n.length-f.length))*.5;else if(n.includes(f))sc+=15;
+  if(x.quoteType==='EQUITY')sc+=10;return sc+Math.log10((x.score||1)+1)*5}
+function local(v){const f=v.toLowerCase();return[...ST,...US].filter(s=>!NA.has(s)&&Q[s]&&(s.toLowerCase().replace('.st','')===f||Q[s].name.toLowerCase().startsWith(f))).slice(0,3).map(s=>({symbol:s,name:Q[s].name,x:s.endsWith('.ST')?'Stockholm':'Nasdaq'}))}
+function paint(msgText){
+  const g=$('gr');
+  if(msgText){g.innerHTML='<div class="nores">'+msgText+'</div>';return}
+  g.innerHTML=hits.length?hits.map((h,i)=>{const q=Q[h.symbol];return `<button data-i="${i}" class="${i===hi?'hv':''}"><span><b>${esc(h.name||(q&&q.name)||h.symbol)}</b><small>${esc(h.symbol.replace('.ST',''))} · ${h.x}${h.t==='ETF'?' · fond (ETF)':''}</small></span><span class="r">${q?`<b>${fmt(q.px,q.cur)}</b><small class="${cls(q.px-q.prev)}">${pct((q.px/q.prev-1)*100)}</small>`:''}</span></button>`}).join(''):'<div class="nores">Inga träffar på Nasdaq, NYSE eller Stockholmsbörsen.</div>';
+  g.querySelectorAll('button[data-i]').forEach(b=>b.onclick=()=>openHit(hits[+b.dataset.i]))}
+function openHit(h){if(!h)return;hits=[];hi=-1;$('gr').innerHTML='';$('gs').value='';go('stock',h.symbol)}
+async function search(v){
+  const my=++seq;hits=local(v);hi=-1;paint(hits.length?'':'Söker...');if(hits.length)paint();
+  try{
+    const d=await J('https://query1.finance.yahoo.com/v1/finance/search?quotesCount=25&newsCount=0&q='+encodeURIComponent(v));
+    if(my!==seq)return;
+    const r=d.quotes.filter(x=>(x.quoteType==='EQUITY'||x.quoteType==='ETF')&&OKX[x.exchange]).map(x=>({symbol:x.symbol,name:x.shortname||x.longname||'',x:OKX[x.exchange],t:x.quoteType,sc:rank(v,x)})).sort((a,b)=>b.sc-a.sc);
+    const seen=new Set(),out=[];for(const h of [...hits,...r]){if(!seen.has(h.symbol)){seen.add(h.symbol);out.push(h)}}
+    hits=out.slice(0,7);hi=-1;paint();
+    const todo=hits.filter(h=>!Q[h.symbol]).map(h=>h.symbol);
+    await Promise.all([0,1,2].map(async()=>{while(todo.length){const sy=todo.shift();try{Q[sy]=await quote(sy);if(my===seq)paint()}catch(e){}}}));
+  }catch(err){if(my===seq)paint('Sökningen misslyckades ('+lastErr+')')}}
+$('gs').oninput=e=>{clearTimeout(tm);const v=e.target.value.trim();if(v.length<2||!proxy){seq++;hits=[];$('gr').innerHTML='';return}tm=setTimeout(()=>search(v),250)};
+$('gs').onkeydown=e=>{
+  if(e.key==='ArrowDown'||e.key==='ArrowUp'){if(!hits.length)return;e.preventDefault();hi=(hi+(e.key==='ArrowDown'?1:-1)+hits.length)%hits.length;paint()}
+  else if(e.key==='Enter'){openHit(hits[hi>=0?hi:0])}
+  else if(e.key==='Escape'){seq++;hits=[];$('gr').innerHTML='';$('gs').blur()}};
+document.addEventListener('click',e=>{if(!e.target.closest('.sw')){seq++;hits=[];$('gr').innerHTML=''}});
+addEventListener('resize',update);
+shell();refresh();setInterval(refresh,30000);
+</script>
+</body>
+</html>
